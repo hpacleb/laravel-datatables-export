@@ -18,9 +18,15 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use OpenSpout\Common\Helper\CellTypeHelper;
+use OpenSpout\Common\Helper\GlobalFunctionsHelper;
 use OpenSpout\Common\Type;
+use OpenSpout\Writer\Common\Creator\InternalEntityFactory;
 use OpenSpout\Writer\Common\Creator\Style\StyleBuilder;
 use OpenSpout\Writer\Common\Creator\WriterEntityFactory;
+use OpenSpout\Writer\XLSX\Creator\HelperFactory as XLSXHelperFactory;
+use OpenSpout\Writer\XLSX\Creator\ManagerFactory as XLSXManagerFactory;
+use OpenSpout\Writer\XLSX\Manager\OptionsManager as XLSXOptionsManager;
+use OpenSpout\Writer\XLSX\Writer as XLSXWriter;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use Yajra\DataTables\Html\Column;
@@ -65,6 +71,7 @@ class DataTableExportJob implements ShouldQueue, ShouldBeUnique
      * @throws \OpenSpout\Common\Exception\IOException
      * @throws \OpenSpout\Common\Exception\UnsupportedTypeException
      * @throws \OpenSpout\Writer\Exception\WriterNotOpenedException
+     * @throws \OpenSpout\Writer\Exception\InvalidSheetNameException
      */
     public function handle()
     {
@@ -93,8 +100,16 @@ class DataTableExportJob implements ShouldQueue, ShouldBeUnique
 
         $path = Storage::disk($disk)->path($filename);
 
-        $writer = WriterEntityFactory::createWriter($type);
+        $styleBuilder = new StyleBuilder();
+        $optionsManager = new XLSXOptionsManager($styleBuilder);
+        $optionsManager->setOption('defaultColumnWidth',5);
+        $globalFunctionsHelper = new GlobalFunctionsHelper();
+
+        $helperFactory = new XLSXHelperFactory();
+        $managerFactory = new XLSXManagerFactory(new InternalEntityFactory(), $helperFactory);
+        $writer = new XLSXWriter($optionsManager, $globalFunctionsHelper, $helperFactory, $managerFactory);
         $writer->openToFile($path);
+        $writer->getCurrentSheet()->setName('test');
 
         $columns = $this->getExportableColumns($oTable);
         $writer->addRow(
