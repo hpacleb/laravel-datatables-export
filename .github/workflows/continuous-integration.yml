@@ -9,7 +9,7 @@ on:
 jobs:
   phpunit:
 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     strategy:
       fail-fast: true
