@@ -24,7 +24,7 @@ jobs:
   static-analysis-phpstan:
 
     name: "Static Analysis with PHPStan"
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: true
